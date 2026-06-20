@@ -39,10 +39,57 @@ The easiest way to run the entire system is using Docker Compose. It will automa
    ```bash
    docker-compose up --build
    ```
-3. The services will be exposed on the following ports:
+3. To stop the cluster and remove containers, run:
+   ```bash
+   docker-compose down
+   ```
+4. The services will be exposed on the following ports:
    - API Gateway: `http://localhost:3000`
    - Auth Service: `http://localhost:3001`
    - Demo Service: `http://localhost:3002` (Should generally only be accessed via the Gateway)
+
+## How to Run Locally (Standalone Docker Commands)
+
+If you prefer to build and run the Docker containers manually instead of using Docker Compose, you can do so by creating a shared Docker network and running each container individually:
+
+1. **Create a shared network**:
+   ```bash
+   docker network create iam-network
+   ```
+
+2. **Start the Databases**:
+   ```bash
+   # Start PostgreSQL
+   docker run -d --name postgres --network iam-network -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=iam_db -v $(pwd)/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql -p 5432:5432 postgres:15-alpine
+   
+   # Start Redis
+   docker run -d --name redis --network iam-network -p 6379:6379 redis:7-alpine
+   ```
+
+3. **Build and Start Auth Service**:
+   ```bash
+   docker build -t auth-service ./auth-service
+   docker run -d --name auth-service --network iam-network -e PORT=3001 -e DB_USER=postgres -e DB_PASSWORD=password -e DB_NAME=iam_db -e DB_HOST=postgres -e DB_PORT=5432 -p 3001:3001 auth-service
+   ```
+
+4. **Build and Start Demo Service**:
+   ```bash
+   docker build -t demo-service ./demo-service
+   docker run -d --name demo-service --network iam-network -e PORT=3002 -p 3002:3002 demo-service
+   ```
+
+5. **Build and Start API Gateway**:
+   ```bash
+   docker build -t api-gateway ./api-gateway
+   docker run -d --name api-gateway --network iam-network -e PORT=3000 -e REDIS_HOST=redis -e REDIS_PORT=6379 -e AUTH_SERVICE_URL=http://auth-service:3001 -e DEMO_SERVICE_URL=http://demo-service:3002 -p 3000:3000 api-gateway
+   ```
+
+6. **To stop and remove manual containers**:
+   ```bash
+   docker stop api-gateway demo-service auth-service redis postgres
+   docker rm api-gateway demo-service auth-service redis postgres
+   docker network rm iam-network
+   ```
 
 ## Testing the Flow
 

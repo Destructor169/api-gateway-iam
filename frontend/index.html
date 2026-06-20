@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAM Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="container">
+        <!-- Auth Section -->
+        <section id="auth-section" class="glass-panel">
+            <div class="header">
+                <h1>IAM Gateway</h1>
+                <p>Sign in to access your microservices</p>
+            </div>
+            
+            <form id="auth-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div id="auth-error" class="error-text hidden"></div>
+                
+                <div class="actions">
+                    <button type="submit" id="login-btn" class="btn primary">Login</button>
+                    <button type="button" id="register-btn" class="btn secondary">Register</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="glass-panel hidden">
+            <div class="header">
+                <h1>Welcome back, <span id="user-display">User</span></h1>
+                <button id="logout-btn" class="btn outline small">Logout</button>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="card">
+                    <h3>Secure Data Vault</h3>
+                    <p>Fetch protected data from the Demo Service.</p>
+                    <button id="fetch-data-btn" class="btn primary mt-4">Fetch Data</button>
+                </div>
+
+                <div class="data-display-wrapper">
+                    <pre id="data-display" class="hidden"></pre>
+                    <div id="data-error" class="error-text hidden"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
