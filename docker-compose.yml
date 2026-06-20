@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: iam_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      - PORT=3001
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=iam_db
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - DEMO_SERVICE_URL=http://demo-service:3002
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - auth-service
+      - demo-service
+
+  demo-service:
+    build: ./demo-service
+    environment:
+      - PORT=3002
+    ports:
+      - "3002:3002"
