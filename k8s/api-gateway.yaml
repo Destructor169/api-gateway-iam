@@ -35,5 +35,9 @@ spec:
               value: "6379"
             - name: AUTH_SERVICE_URL
               value: http://auth-service:3001
-            - name: DEMO_SERVICE_URL
-              value: http://demo-service:3002
+            - name: FINANCE_SERVICE_URL
+              value: http://finance-service:3002
+            - name: NEWS_SERVICE_URL
+              value: http://news-service:3003
+            - name: TRADING_SERVICE_URL
+              value: http://trading-service:3004

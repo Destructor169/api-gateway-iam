@@ -3,64 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IAM Dashboard</title>
+    <title>FinVault — Financial Dashboard</title>
+    <meta name="description" content="Real-time financial dashboard with market data, news sentiment analysis, and paper trading.">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="background-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <main class="container">
-        <!-- Auth Section -->
-        <section id="auth-section" class="glass-panel">
-            <div class="header">
-                <h1>IAM Gateway</h1>
-                <p>Sign in to access your microservices</p>
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SCREEN 1: LOGIN / REGISTER             -->
+    <!-- ═══════════════════════════════════════ -->
+    <section id="auth-screen" class="screen active">
+        <div class="auth-container glass-panel">
+            <div class="auth-header">
+                <div class="logo">
+                    <span class="logo-icon">◆</span>
+                    <h1>FinVault</h1>
+                </div>
+                <p class="subtitle">Your secure financial command center</p>
             </div>
             
-            <form id="auth-form">
+            <!-- Login Form -->
+            <form id="contact-form" class="auth-form">
                 <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" required autocomplete="off">
+                    <label for="auth-contact">Email or Mobile Number</label>
+                    <input type="text" id="auth-contact" placeholder="e.g. user@gmail.com or +1234567890" required autocomplete="off">
                 </div>
                 <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" required>
+                    <label for="auth-password">Password</label>
+                    <input type="password" id="auth-password" placeholder="Enter your password" required autocomplete="off">
                 </div>
-                <div id="auth-error" class="error-text hidden"></div>
-                
-                <div class="actions">
-                    <button type="submit" id="login-btn" class="btn primary">Login</button>
-                    <button type="button" id="register-btn" class="btn secondary">Register</button>
-                </div>
+                <div id="contact-error" class="msg error hidden"></div>
+                <button type="submit" class="btn primary" id="contact-submit-btn">Sign In</button>
+                <p class="auth-switch">Don't have an account? <a href="#" id="show-register-link">Create one</a></p>
             </form>
-        </section>
 
-        <!-- Dashboard Section -->
-        <section id="dashboard-section" class="glass-panel hidden">
-            <div class="header">
-                <h1>Welcome back, <span id="user-display">User</span></h1>
-                <button id="logout-btn" class="btn outline small">Logout</button>
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form hidden">
+                <div style="display:flex; gap:12px;">
+                    <div class="input-group" style="flex:1;">
+                        <label for="reg-first">First Name</label>
+                        <input type="text" id="reg-first" placeholder="e.g. Jane" required autocomplete="off">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label for="reg-last">Last Name</label>
+                        <input type="text" id="reg-last" placeholder="e.g. Doe" required autocomplete="off">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="reg-contact">Email or Mobile Number</label>
+                    <input type="text" id="reg-contact" placeholder="e.g. user@gmail.com or +1234567890" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" placeholder="Create a strong password" required autocomplete="off">
+                </div>
+                <div id="register-error" class="msg error hidden"></div>
+                <button type="submit" class="btn primary" id="register-submit-btn">Create Account</button>
+                <p class="auth-switch">Already have an account? <a href="#" id="show-login-link">Sign in</a></p>
+            </form>
+
+            <!-- OTP Form -->
+            <form id="otp-form" class="auth-form hidden">
+                <p style="text-align:center; color:var(--text-secondary); margin-bottom:16px; font-size:0.9rem;">
+                    Enter the 6-digit code sent to <br><strong id="otp-destination" style="color:var(--text-primary);"></strong>
+                </p>
+                <div class="otp-inputs">
+                    <input type="text" class="otp-box" maxlength="1" required>
+                    <input type="text" class="otp-box" maxlength="1" required>
+                    <input type="text" class="otp-box" maxlength="1" required>
+                    <input type="text" class="otp-box" maxlength="1" required>
+                    <input type="text" class="otp-box" maxlength="1" required>
+                    <input type="text" class="otp-box" maxlength="1" required>
+                </div>
+                <div id="otp-error" class="msg error hidden"></div>
+                <button type="submit" class="btn primary" id="otp-submit-btn">Verify & Sign In</button>
+                <p class="auth-switch"><a href="#" id="otp-back-link">← Use a different method</a></p>
+            </form>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SCREEN 2: API KEY SETUP                -->
+    <!-- ═══════════════════════════════════════ -->
+    <section id="setup-screen" class="screen">
+        <div class="setup-container glass-panel">
+            <div class="setup-header">
+                <h2>Configure Data Sources</h2>
+                <p>Set up your API keys to unlock all features. Yahoo Finance data is free and requires no key.</p>
             </div>
 
-            <div class="dashboard-content">
-                <div class="card">
-                    <h3>Secure Data Vault</h3>
-                    <p>Fetch protected data from the Demo Service.</p>
-                    <button id="fetch-data-btn" class="btn primary mt-4">Fetch Data</button>
+            <div class="setup-cards">
+                <div class="setup-card">
+                    <div class="setup-card-header">
+                        <span class="provider-badge free">FREE</span>
+                        <h3>Yahoo Finance</h3>
+                    </div>
+                    <p>Stocks, crypto, ETFs, indices — historical & real-time data via yfinance.</p>
+                    <div class="setup-status active">
+                        <span class="status-dot"></span> Active — No key required
+                    </div>
                 </div>
 
-                <div class="data-display-wrapper">
-                    <pre id="data-display" class="hidden"></pre>
-                    <div id="data-error" class="error-text hidden"></div>
+                <div class="setup-card">
+                    <div class="setup-card-header">
+                        <span class="provider-badge key">API KEY</span>
+                        <h3>GNews</h3>
+                    </div>
+                    <p>Keyword-based news search with sentiment analysis. <a href="https://gnews.io" target="_blank">Get free key →</a></p>
+                    <div class="input-group compact">
+                        <input type="text" id="gnews-key-input" placeholder="Paste your GNews API key">
+                        <button type="button" id="save-gnews-key-btn" class="btn primary small">Save</button>
+                    </div>
+                    <div id="gnews-status" class="setup-status">
+                        <span class="status-dot inactive"></span> Not configured
+                    </div>
                 </div>
             </div>
-        </section>
-    </main>
 
+            <div class="setup-actions">
+                <button type="button" id="setup-continue-btn" class="btn primary">Continue to Dashboard</button>
+                <button type="button" id="setup-skip-btn" class="btn ghost">Skip for now</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SCREEN 3: MAIN DASHBOARD               -->
+    <!-- ═══════════════════════════════════════ -->
+    <section id="dashboard-screen" class="screen">
+        <div class="dashboard-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar glass-panel">
+                <div class="sidebar-logo">
+                    <span class="logo-icon">◆</span>
+                    <span>FinVault</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-page="market" id="nav-market">
+                        <span class="nav-icon">📊</span> Market
+                    </a>
+                    <a href="#" class="nav-item" data-page="portfolio" id="nav-portfolio">
+                        <span class="nav-icon">💼</span> Portfolio
+                    </a>
+                    <a href="#" class="nav-item" data-page="settings" id="nav-settings">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
+                </nav>
+                <div class="sidebar-user" style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+                    <div id="sidebar-avatar" class="avatar-circle">?</div>
+                    <div class="user-info" style="display:flex; flex-direction:column; overflow:hidden;">
+                        <span id="sidebar-username" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; font-size:0.9rem;">User</span>
+                        <a href="#" id="logout-btn" style="color:var(--text-muted); font-size:0.8rem; text-decoration:none;">Logout</a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Top Bar -->
+                <header class="topbar">
+                    <div class="search-container" style="position: relative;">
+                    <input type="text" id="instrument-search" placeholder="Search instrument (e.g. AAPL, BTC-USD)..." autocomplete="off">
+                    <button class="btn primary small" id="search-btn"><i class="fas fa-search"></i> Search</button>
+                    <div id="search-suggestions" class="suggestions-dropdown hidden"></div>
+                </div>
+                    <div class="topbar-right">
+                        <span id="topbar-time" class="topbar-time"></span>
+                    </div>
+                </header>
+
+                <!-- ── MARKET PAGE ── -->
+                <div id="page-market" class="page active">
+                    <!-- Trending Tickers -->
+                    <section class="section">
+                        <div class="section-header">
+                            <h2>Market Overview</h2>
+                            <button id="refresh-trending-btn" class="btn ghost small">↻ Refresh</button>
+                        </div>
+                        <div id="trending-grid" class="ticker-grid">
+                            <div class="loading-placeholder">Loading market data...</div>
+                        </div>
+                    </section>
+
+                    <!-- Chart + Trade Panel (shown after search) -->
+                    <div id="instrument-detail" class="instrument-detail hidden">
+                        <section class="section chart-section">
+                            <div class="chart-header">
+                                <div>
+                                    <h2 id="chart-title">—</h2>
+                                    <span id="chart-price" class="chart-price">—</span>
+                                    <span id="chart-change" class="chart-change">—</span>
+                                </div>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <button id="export-chart-csv" class="btn ghost small"><i class="fas fa-download"></i> Data (CSV)</button>
+                                    <div class="chart-period-btns">
+                                    <button class="period-btn active" data-period="1mo">1M</button>
+                                    <button class="period-btn" data-period="3mo">3M</button>
+                                    <button class="period-btn" data-period="6mo">6M</button>
+                                    <button class="period-btn" data-period="1y">1Y</button>
+                                    <button class="period-btn" data-period="5y">5Y</button>
+                                    <button class="period-btn" data-period="max">ALL</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Indicators Above Chart -->
+                            <div class="indicators-bar glass-panel compact" style="margin-bottom: 16px;">
+                                <div class="indicators-header">
+                                    <span><i class="fas fa-chart-line"></i> Chart Indicators:</span>
+                                    <button id="add-indicator-btn" class="btn ghost small">+ Add Indicator</button>
+                                </div>
+                                <div id="active-indicators" class="active-indicators-list">
+                                    <div class="empty-chips">No indicators active. Click + Add to start.</div>
+                                </div>
+                            </div>
+
+                            <div class="chart-wrapper">
+                                <canvas id="price-chart"></canvas>
+                            </div>
+                            
+                            <!-- Strategy Backtesting Laboratory Below Chart -->
+                            <div class="strategy-lab glass-panel">
+                                <div class="strategy-lab-header">
+                                    <div>
+                                        <h3><i class="fas fa-flask"></i> Strategy Backtesting Lab</h3>
+                                        <p class="subtitle" style="font-size:0.8rem; color:var(--text-muted); margin:0;">Simulate algorithms with train/val splits</p>
+                                    </div>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <button id="export-trades-csv" class="btn ghost small"><i class="fas fa-download"></i> Logs (CSV)</button>
+                                        <button id="add-strategy-btn" class="btn primary small">+ Add Strategy</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="strategy-global-config" style="display:flex; gap:16px; margin-top:16px; align-items:flex-end;">
+                                    <div class="input-group compact">
+                                        <label title="Percentage of data withheld for validation">Val Split (%)</label>
+                                        <input type="number" id="bt-val-split" value="20" min="5" max="50">
+                                    </div>
+                                    <div class="input-group compact">
+                                        <label title="Stop Loss percentage">Stop Loss (%)</label>
+                                        <input type="number" id="bt-stop-loss" placeholder="e.g. 5" step="0.5">
+                                    </div>
+                                    <div class="input-group compact">
+                                        <label title="Take Profit percentage">Take Profit (%)</label>
+                                        <input type="number" id="bt-take-profit" placeholder="e.g. 10" step="0.5">
+                                    </div>
+                                </div>
+                                
+                                <div id="active-strategies" class="active-indicators-list" style="margin-top:16px;"></div>
+                                
+                                <div id="backtest-results-container" class="backtest-results-grid hidden"></div>
+                                
+                                <div id="trade-logs-container" class="trade-logs-container hidden" style="margin-top:24px;">
+                                    <h4 style="margin-bottom:8px;">Trade Execution Logs</h4>
+                                    <div class="table-responsive">
+                                        <table class="trade-logs-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Strategy</th>
+                                                    <th>Split</th>
+                                                    <th>Entry Date</th>
+                                                    <th>Exit Date</th>
+                                                    <th>Entry $</th>
+                                                    <th>Exit $</th>
+                                                    <th>PnL $</th>
+                                                    <th>PnL %</th>
+                                                    <th>Reason</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="trade-logs-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Quick Trade -->
+                        <section class="section trade-panel glass-panel">
+                            <h3>Paper Trade</h3>
+                            <div class="trade-form">
+                                <div class="trade-sides">
+                                    <button class="trade-side-btn active" data-side="buy" id="trade-buy-btn">Buy</button>
+                                    <button class="trade-side-btn" data-side="sell" id="trade-sell-btn">Sell</button>
+                                </div>
+                                <div class="input-group compact">
+                                    <label>Quantity</label>
+                                    <input type="number" id="trade-quantity" min="0.00000001" step="any" placeholder="0.00" required>
+                                </div>
+                                <div class="trade-summary">
+                                    <span>Total:</span>
+                                    <span id="trade-total">$0.00</span>
+                                </div>
+                                <button id="execute-trade-btn" class="btn primary">Execute Trade</button>
+                                <div id="trade-msg" class="msg hidden"></div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- News Section -->
+                    <section class="section news-section">
+                        <div class="section-header">
+                            <h2>News & Sentiment</h2>
+                        </div>
+                        <div class="news-search-bar">
+                            <input type="text" id="news-keyword-input" placeholder="Search news by keyword (e.g. Donald Trump, Bitcoin)..." autocomplete="off">
+                            <button type="button" id="news-search-btn" class="btn primary small">Search News</button>
+                        </div>
+                        <div id="news-feed" class="news-feed">
+                            <div class="loading-placeholder">Loading trending news...</div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ── PORTFOLIO PAGE ── -->
+                <div id="page-portfolio" class="page">
+                    <section class="section">
+                        <div class="section-header">
+                            <h2>Portfolio Holdings</h2>
+                            <button id="reset-portfolio-btn" class="btn ghost small danger">Reset Portfolio</button>
+                        </div>
+                        <div id="portfolio-holdings" class="table-wrapper">
+                            <div class="loading-placeholder">Loading portfolio...</div>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <div class="section-header">
+                            <h2>Trade History</h2>
+                        </div>
+                        <div id="trade-history" class="table-wrapper">
+                            <div class="loading-placeholder">Loading trades...</div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ── SETTINGS PAGE ── -->
+                <div id="page-settings" class="page">
+                    <section class="section">
+                        <h2>API Key Settings</h2>
+                        <p class="section-desc">Manage your data source API keys. Yahoo Finance is always free.</p>
+                        <div class="settings-card glass-panel">
+                            <h3>GNews API Key</h3>
+                            <p>Required for keyword-based news search. <a href="https://gnews.io" target="_blank">Get a free key →</a></p>
+                            <div class="input-group compact">
+                                <input type="text" id="settings-gnews-key" placeholder="Paste your GNews API key">
+                                <button type="button" id="settings-save-gnews-btn" class="btn primary small">Save</button>
+                            </div>
+                            <div id="settings-gnews-status" class="setup-status">
+                                <span class="status-dot inactive"></span> Not configured
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </section>
+    <!-- Add Indicator Modal -->
+    <div id="add-indicator-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 id="modal-dynamic-title">Add Analytics</h2>
+                <button class="close-modal-btn" id="close-indicator-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Select Type</label>
+                    <select id="indicator-type-select">
+                        <optgroup label="Overlays" class="opt-indicator">
+                            <option value="SMA">Simple Moving Average (SMA)</option>
+                            <option value="EMA">Exponential Moving Average (EMA)</option>
+                            <option value="BBANDS">Bollinger Bands</option>
+                            <option value="MEDIAN">Rolling Median</option>
+                            <option value="STRAT_GRID">Grid Trading Lines</option>
+                        </optgroup>
+                        <optgroup label="Oscillators" class="opt-indicator">
+                            <option value="RSI">Relative Strength Index (RSI)</option>
+                            <option value="MACD">MACD</option>
+                            <option value="ZSCORE">Z-Score</option>
+                        </optgroup>
+                        <optgroup label="Trend Strategies" class="opt-strategy">
+                            <option value="STRAT_SMA_CROSS">SMA Crossover</option>
+                            <option value="STRAT_EMA_CROSS">EMA Crossover</option>
+                            <option value="STRAT_MACD">MACD Strategy</option>
+                        </optgroup>
+                        <optgroup label="Momentum & Breakout" class="opt-strategy">
+                            <option value="STRAT_RSI_MOMENTUM">RSI Momentum</option>
+                            <option value="STRAT_SUPPORT_RESISTANCE">Support/Resistance Breakout</option>
+                            <option value="STRAT_VOLUME_SPIKE">Volume Spike Alert</option>
+                        </optgroup>
+                        <optgroup label="Mean Reversion" class="opt-strategy">
+                            <option value="STRAT_BB_REVERSAL">Bollinger Reversal</option>
+                            <option value="STRAT_VWAP_REVERSAL">VWAP Reversal</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div id="indicator-params" class="indicator-params">
+                    <!-- Dynamically populated params based on selection -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancel-indicator-btn">Cancel</button>
+                <button class="btn primary" id="confirm-indicator-btn">Add to Chart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="app.js"></script>
 </body>
 </html>

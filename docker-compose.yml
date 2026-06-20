@@ -8,6 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - pgdata:/var/lib/postgresql/data
       - ./backend/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
@@ -24,6 +25,7 @@ services:
       - DB_NAME=iam_db
       - DB_HOST=postgres
       - DB_PORT=5432
+      - ENCRYPTION_KEY=my-super-secret-encryption-key-2024
     ports:
       - "3001:3001"
     depends_on:
@@ -36,20 +38,49 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_SERVICE_URL=http://auth-service:3001
-      - DEMO_SERVICE_URL=http://demo-service:3002
+      - FINANCE_SERVICE_URL=http://finance-service:3002
+      - NEWS_SERVICE_URL=http://news-service:3003
+      - TRADING_SERVICE_URL=http://trading-service:3004
     ports:
       - "3000:3000"
     depends_on:
       - redis
       - auth-service
-      - demo-service
+      - finance-service
+      - news-service
+      - trading-service
 
-  demo-service:
-    build: ./backend/demo-service
+  finance-service:
+    build: ./backend/finance-service
     environment:
       - PORT=3002
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "3002:3002"
+    depends_on:
+      - redis
+
+  news-service:
+    build: ./backend/news-service
+    environment:
+      - PORT=3003
+    ports:
+      - "3003:3003"
+
+  trading-service:
+    build: ./backend/trading-service
+    environment:
+      - PORT=3004
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=iam_db
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    ports:
+      - "3004:3004"
+    depends_on:
+      - postgres
 
   frontend:
     image: nginx:alpine
@@ -57,3 +88,6 @@ services:
       - "8080:80"
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
+
+volumes:
+  pgdata:

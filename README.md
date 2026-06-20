@@ -1,35 +1,37 @@
-# Developer API Gateway & IAM System
+# Advanced Financial Dashboard & API Gateway System
 
-This project is a complete Identity and Access Management (IAM) system and API Gateway, built using a microservices architecture. It demonstrates how authentication works at scale, focusing on JSON Web Tokens (JWT), OAuth-like token issuance, and rate limiting.
-
-The Gateway acts as the single point of entry for your microservices, validating tokens and protecting backend services from unauthenticated traffic or abuse.
+This project is a complete microservices-based financial dashboard. It demonstrates how to build a scalable, secure architecture with an API Gateway acting as a central entry point, Identity and Access Management (IAM) for authentication, and various backend services for market data, news sentiment, and paper trading.
 
 ## Architecture
 
-1. **Auth Service (IAM)**: A Node.js/Express service backed by PostgreSQL. It handles user registration, password hashing (bcrypt), and issues RS256-signed JWTs upon login. It also exposes its public key so other services can verify tokens.
-2. **API Gateway**: A Node.js/Express service backed by Redis. It intercepts incoming requests, verifies JWTs using the Auth Service's public key, applies rate limiting (using a token-bucket algorithm via Redis), and proxies requests to backend services.
-3. **Demo Service**: A simple protected Node.js backend API that relies entirely on the Gateway for authentication.
-4. **PostgreSQL**: Stores user credentials.
-5. **Redis**: Stores rate-limiting counters.
+1. **Frontend Dashboard**: A responsive, dark-themed Single Page Application (HTML/CSS/JS) served via NGINX. It provides a premium UI for user registration, API key setup, market overview, charting, news search, and paper trading.
+2. **API Gateway**: A Node.js/Express service backed by Redis. It intercepts incoming requests, verifies JWTs using the Auth Service's public key, applies rate limiting (30 requests/min), injects the authenticated `x-user-id` header, and proxies requests to backend services.
+3. **Auth Service (IAM)**: A Node.js/Express service backed by PostgreSQL. It handles user registration, password hashing (bcrypt), issues RS256-signed JWTs, and securely manages user API keys (e.g., GNews) with AES-256 encryption.
+4. **Finance Service**: A Python/Flask service backed by Redis. It fetches live stock/crypto quotes, historical OHLCV charting data, and trending symbols using `yfinance`. It caches data in Redis and features a graceful fallback to mock data to prevent rate-limit failures.
+5. **News Sentiment Service**: A Node.js/Express service. It fetches real-time news based on keyword searches. It uses user-provided GNews API keys for premium news, or falls back to Hacker News. It runs Natural Language Processing (NLP) to score the sentiment of headlines (Positive, Negative, Neutral).
+6. **Trading Service**: A Node.js/Express service backed by PostgreSQL. It handles paper trading execution (Buy/Sell) using atomic SQL transactions, and maintains user portfolios and trade histories.
+7. **PostgreSQL**: Stores user credentials, encrypted API keys, trades, and portfolio holdings across 5 tables.
+8. **Redis**: Stores rate-limiting counters and caches financial market data.
 
 ## Folder Structure
 
-- `/auth-service`: Contains the source code, Dockerfile, and database initialization scripts for the Identity and Access Management service.
-- `/api-gateway`: Contains the source code and Dockerfile for the central API Gateway, including custom middleware for JWT verification and Redis rate limiting.
-- `/demo-service`: Contains the source code and Dockerfile for a sample backend service protected by the gateway.
-- `/k8s`: Contains Kubernetes manifests (`Deployment` and `Service` files) for deploying the entire stack to a cluster.
-- `docker-compose.yml`: Orchestrates the entire system locally, bringing up Postgres, Redis, and all three Node.js services.
-- `test.sh`: An automated bash script to test the end-to-end authentication and rate-limiting flows.
+- `/frontend`: The UI layer served via NGINX.
+- `/backend/auth-service`: IAM service, user management, API key storage.
+- `/backend/api-gateway`: Central routing, JWT verification, rate limiting.
+- `/backend/finance-service`: Python/Flask market data service.
+- `/backend/news-service`: News search and sentiment analysis.
+- `/backend/trading-service`: Paper trading execution engine.
+- `/k8s`: Kubernetes manifests (`Deployment` and `Service` files) for deploying the stack.
+- `docker-compose.yml`: Orchestrates the entire system locally, bringing up Postgres, Redis, the frontend, and all five backend services.
 
 ## Prerequisites
 
 To run this project locally, you will need:
 - [Docker](https://www.docker.com/) and Docker Compose installed.
-- (Optional) Node.js 18+ if you want to run services locally outside of Docker.
 
-## How to Run Locally (Docker Compose)
+## How to Run Locally
 
-The easiest way to run the entire system is using Docker Compose. It will automatically build the images and wire up the network.
+The easiest way to run the entire system is using Docker Compose. It will automatically build the images, wire up the network, and initialize the database schemas.
 
 1. Navigate to the project root:
    ```bash
@@ -37,81 +39,38 @@ The easiest way to run the entire system is using Docker Compose. It will automa
    ```
 2. Start the cluster:
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
 3. To stop the cluster and remove containers, run:
    ```bash
    docker-compose down
    ```
-4. The services will be exposed on the following ports:
-   - API Gateway: `http://localhost:3000`
-   - Auth Service: `http://localhost:3001`
-   - Demo Service: `http://localhost:3002` (Should generally only be accessed via the Gateway)
 
-## How to Run Locally (Standalone Docker Commands)
+### Accessing the System
 
-If you prefer to build and run the Docker containers manually instead of using Docker Compose, you can do so by creating a shared Docker network and running each container individually:
+Once the cluster is running, the services will be exposed on the following ports:
 
-1. **Create a shared network**:
-   ```bash
-   docker network create iam-network
-   ```
+- **Frontend UI**: [http://localhost:8080](http://localhost:8080) — **Open this in your browser to use the app!**
+- **API Gateway**: `http://localhost:3000`
+- **Auth Service**: `http://localhost:3001` (Internal)
+- **Finance Service**: `http://localhost:3002` (Internal)
+- **News Service**: `http://localhost:3003` (Internal)
+- **Trading Service**: `http://localhost:3004` (Internal)
 
-2. **Start the Databases**:
-   ```bash
-   # Start PostgreSQL
-   docker run -d --name postgres --network iam-network -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=iam_db -v $(pwd)/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql -p 5432:5432 postgres:15-alpine
-   
-   # Start Redis
-   docker run -d --name redis --network iam-network -p 6379:6379 redis:7-alpine
-   ```
+### Testing the Dashboard Flow
 
-3. **Build and Start Auth Service**:
-   ```bash
-   docker build -t auth-service ./auth-service
-   docker run -d --name auth-service --network iam-network -e PORT=3001 -e DB_USER=postgres -e DB_PASSWORD=password -e DB_NAME=iam_db -e DB_HOST=postgres -e DB_PORT=5432 -p 3001:3001 auth-service
-   ```
-
-4. **Build and Start Demo Service**:
-   ```bash
-   docker build -t demo-service ./demo-service
-   docker run -d --name demo-service --network iam-network -e PORT=3002 -p 3002:3002 demo-service
-   ```
-
-5. **Build and Start API Gateway**:
-   ```bash
-   docker build -t api-gateway ./api-gateway
-   docker run -d --name api-gateway --network iam-network -e PORT=3000 -e REDIS_HOST=redis -e REDIS_PORT=6379 -e AUTH_SERVICE_URL=http://auth-service:3001 -e DEMO_SERVICE_URL=http://demo-service:3002 -p 3000:3000 api-gateway
-   ```
-
-6. **To stop and remove manual containers**:
-   ```bash
-   docker stop api-gateway demo-service auth-service redis postgres
-   docker rm api-gateway demo-service auth-service redis postgres
-   docker network rm iam-network
-   ```
-
-## Testing the Flow
-
-A comprehensive test script (`test.sh`) is provided to verify the authentication and rate-limiting mechanics.
-
-While the Docker cluster is running, open a new terminal window and run:
-```bash
-./test.sh
-```
-
-The script will automatically:
-1. Attempt to access the Demo API without a token (Expect: `401 Unauthorized`).
-2. Register a new user in the Auth Service.
-3. Log in with the new user and extract the generated JWT.
-4. Access the Demo API through the Gateway *with* the JWT (Expect: `200 OK`).
-5. Send 10 rapid requests to test rate limiting (Expect: The first 5 succeed, the next 5 fail with `429 Too Many Requests`).
+1. Open [http://localhost:8080](http://localhost:8080) in your browser.
+2. Click **Create an account** to register a new user.
+3. (Optional) On the Setup screen, provide a free [GNews API Key](https://gnews.io/) for advanced news searches. If you skip this, the system will fall back to Hacker News.
+4. **Market Dashboard**: Search for instruments (e.g., `AAPL`, `BTC-USD`, `TSLA`), view live charts, and read sentiment-analyzed news.
+5. **Paper Trading**: Use the trading panel to Buy or Sell quantities of the selected instrument.
+6. **Portfolio**: Navigate to the Portfolio page using the sidebar to view your current holdings and your full trade history.
 
 ## Kubernetes Deployment
 
 To deploy this stack to a Kubernetes cluster (e.g., Minikube, AWS EKS, Azure AKS):
 
-1. **Build and Push Images**: First, build the Docker images for `auth-service`, `api-gateway`, and `demo-service`, and push them to your container registry (like Docker Hub or AWS ECR).
+1. **Build and Push Images**: First, build the Docker images for all services and push them to your container registry.
 2. **Update Manifests**: Update the `image` fields in the `k8s/*.yaml` manifests to point to your registry.
 3. **Deploy**:
    ```bash

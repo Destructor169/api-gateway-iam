@@ -1,30 +1,30 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-service
+  name: news-service
 spec:
   ports:
-    - port: 3002
+    - port: 3003
   selector:
-    app: demo-service
+    app: news-service
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-service
+  name: news-service
 spec:
   selector:
     matchLabels:
-      app: demo-service
+      app: news-service
   template:
     metadata:
       labels:
-        app: demo-service
+        app: news-service
     spec:
       containers:
-        - name: demo-service
-          image: demo-service:latest
+        - name: news-service
+          image: news-service:latest
           imagePullPolicy: Never
           env:
             - name: PORT
-              value: "3002"
+              value: "3003"

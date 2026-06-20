@@ -13,7 +13,7 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
 redisClient.connect().catch(console.error);
 
 const WINDOW_SIZE_IN_SECONDS = 60;
-const MAX_REQUESTS_PER_WINDOW = 5;
+const MAX_REQUESTS_PER_WINDOW = 30;
 
 export const rateLimiter = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
